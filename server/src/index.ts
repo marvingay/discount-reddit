@@ -13,7 +13,6 @@ import session from 'express-session';
 import connectRedis from 'connect-redis';
 import cors from 'cors';
 
-
 const main = async () => {
 
   const orm = await MikroORM.init(mikroConfig);
@@ -62,6 +61,10 @@ const main = async () => {
 
   app.listen(4000, () => {
     console.log('Server started on localhost:4000')
+  })
+
+  process.on('SIGHUP', () => {
+    process.exit(1)
   })
 };
 
