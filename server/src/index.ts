@@ -27,6 +27,8 @@ const main = async () => {
     entities: [Post, User]
   });
   await conn.runMigrations();
+  // Run migrations please
+  // await Post.delete({});
 
   const app = express();
 
