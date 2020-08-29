@@ -1,15 +1,15 @@
+import { Box, Button, Flex, Heading, Link, Stack, Text } from "@chakra-ui/core";
 import { withUrqlClient } from 'next-urql';
-import { createUrqlClient } from "../utils/createUrqlClient";
-import { usePostsQuery } from "../generated/graphql";
-import Layout from "../components/Layout";
-import { Link, Stack, Box, Heading, Text, Flex, Button } from "@chakra-ui/core";
 import NextLink from "next/link";
+import { useState } from 'react';
+import Layout from "../components/Layout";
+import { usePostsQuery } from "../generated/graphql";
+import { createUrqlClient } from "../utils/createUrqlClient";
 
 const Index = () => {
+  const [variables, setVariables] = useState({ limit: 10, cursor: null as null | string });
   const [{ data, fetching }] = usePostsQuery({
-    variables: {
-      limit: 10,
-    }
+    variables
   });
 
   if (!fetching && !data) {
@@ -40,7 +40,14 @@ const Index = () => {
       {/* Only show Load More button for pagination if data */}
       {data ? (
         <Flex>
-          <Button m='auto' my={8}>Load more</Button>
+          <Button m='auto' my={8} onClick={() => {
+            setVariables(
+              {
+                limit: variables.limit,
+                cursor: data.posts[data.posts.length - 1].createdAt
+              }
+            )
+          }}>Load more</Button>
         </Flex>) : null}
     </Layout>
 
