@@ -1,5 +1,14 @@
 import { ObjectType, Field, Int } from 'type-graphql';
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, BaseEntity, ManyToOne, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  BaseEntity,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
 import { User } from './User';
 import { Updoot } from './Updoot';
 
@@ -22,15 +31,18 @@ export class Post extends BaseEntity {
   @Column({ type: 'int', default: 0 })
   points!: number;
 
+  @Field(() => Int, { nullable: true })
+  voteStatus: number | null;
+
   @Field()
   @Column()
   creatorId: number;
 
   @Field()
-  @ManyToOne(() => User, user => user.posts)
+  @ManyToOne(() => User, (user) => user.posts)
   creator: User;
 
-  @OneToMany(() => Updoot, updoot => updoot.post)
+  @OneToMany(() => Updoot, (updoot) => updoot.post)
   updoots: Updoot[];
 
   @Field(() => String)
