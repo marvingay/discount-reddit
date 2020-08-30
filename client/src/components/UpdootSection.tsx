@@ -38,7 +38,7 @@ const UpdootSection: React.FC<UpdootSectionProps> = ({ post }) => {
             postId: post.id,
             value: -1,
           });
-          setLoadingState('downdoot-loading');
+          setLoadingState('not-loading');
         }}
       />
     </Flex>
