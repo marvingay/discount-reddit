@@ -19,6 +19,8 @@ const UpdootSection: React.FC<UpdootSectionProps> = ({ post }) => {
         icon='chevron-up'
         isLoading={loadingState === 'updoot-loading'}
         onClick={async () => {
+          if (post.voteStatus === 1) return;
+
           setLoadingState('updoot-loading');
           await vote({
             postId: post.id,
@@ -26,6 +28,7 @@ const UpdootSection: React.FC<UpdootSectionProps> = ({ post }) => {
           });
           setLoadingState('not-loading');
         }}
+        variantColor={post.voteStatus === 1 ? 'green' : undefined}
       />
       {post.points}
       <IconButton
@@ -33,6 +36,8 @@ const UpdootSection: React.FC<UpdootSectionProps> = ({ post }) => {
         icon='chevron-down'
         isLoading={loadingState === 'downdoot-loading'}
         onClick={async () => {
+          if (post.voteStatus === -1) return;
+
           setLoadingState('downdoot-loading');
           await vote({
             postId: post.id,
@@ -40,6 +45,7 @@ const UpdootSection: React.FC<UpdootSectionProps> = ({ post }) => {
           });
           setLoadingState('not-loading');
         }}
+        variantColor={post.voteStatus === -1 ? 'red' : undefined}
       />
     </Flex>
   );
