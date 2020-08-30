@@ -1,9 +1,18 @@
-import { Box, Button, Flex, Heading, Link, Stack, Text } from '@chakra-ui/core';
+import {
+  Box,
+  Button,
+  Flex,
+  Heading,
+  Link,
+  Stack,
+  Text,
+  IconButton,
+} from '@chakra-ui/core';
 import { withUrqlClient } from 'next-urql';
 import NextLink from 'next/link';
 import { useState } from 'react';
 import Layout from '../components/Layout';
-import { usePostsQuery } from '../generated/graphql';
+import { usePostsQuery, useDeletePostMutation } from '../generated/graphql';
 import { createUrqlClient } from '../utils/createUrqlClient';
 import UpdootSection from '../components/UpdootSection';
 
@@ -15,6 +24,7 @@ const Index = () => {
   const [{ data, fetching }] = usePostsQuery({
     variables,
   });
+  const [, deletePost] = useDeletePostMutation();
 
   if (!fetching && !data) {
     return (
@@ -30,24 +40,41 @@ const Index = () => {
         <div>loading...</div>
       ) : (
         <Stack spacing={8}>
-          {data!.posts.posts.map((p) => (
-            <Box key={p.id} p={5} shadow='md' borderWidth='1px'>
-              <Flex>
-                <Box>
-                  <UpdootSection post={p} />
-                </Box>
-                <Box>
-                  <NextLink href='/post/[id]' as={`/post/${p.id}`}>
-                    <Link>
-                      <Heading fontSize='xl'>{p.title}</Heading>
-                    </Link>
-                  </NextLink>
-                  <Text>posted by {p.creator.username}</Text>
-                  <Text mt={4}>{p.textSnippet}</Text>
-                </Box>
-              </Flex>
-            </Box>
-          ))}
+          {data!.posts.posts.map((p) =>
+            !p ? null : (
+              <Box key={p.id} p={5} shadow='md' borderWidth='1px'>
+                <Flex>
+                  <Box>
+                    <UpdootSection post={p} />
+                  </Box>
+                  <Box flex={1}>
+                    <NextLink href='/post/[id]' as={`/post/${p.id}`}>
+                      <Link>
+                        <Heading fontSize='xl'>{p.title}</Heading>
+                      </Link>
+                    </NextLink>
+                    <Text>posted by {p.creator.username}</Text>
+                    <Flex align='center'>
+                      <Text flex={1} mt={4}>
+                        {p.textSnippet}
+                      </Text>
+                      <IconButton
+                        aria-label='delete post'
+                        icon='delete'
+                        ml='auto'
+                        onClick={() => {
+                          deletePost({
+                            id: p.id,
+                          });
+                        }}
+                        variantColor='red'
+                      />
+                    </Flex>
+                  </Box>
+                </Flex>
+              </Box>
+            )
+          )}
         </Stack>
       )}
       {/* Only show Load More button for pagination if data AND not at end*/}
