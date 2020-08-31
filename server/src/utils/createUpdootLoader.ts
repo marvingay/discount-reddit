@@ -1,5 +1,4 @@
 import DataLoader from 'dataloader';
-import { User } from '../entities/User';
 import { Updoot } from '../entities/Updoot';
 
 export const createUpdootLoader = () =>

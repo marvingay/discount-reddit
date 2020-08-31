@@ -18,7 +18,6 @@ import { isAuth } from '../middleware/isAuth';
 import { getConnection } from 'typeorm';
 import { Updoot } from '../entities/Updoot';
 import { User } from '../entities/User';
-import { createUpdootLoader } from 'src/utils/createUpdootLoader';
 
 @InputType()
 class PostInput {
@@ -132,8 +131,7 @@ export class PostResolver {
   @Query(() => PaginatedPosts)
   async posts(
     @Arg('limit', () => Int) limit: number,
-    @Arg('cursor', () => String, { nullable: true }) cursor: string | null,
-    @Ctx() { req }: MyContext
+    @Arg('cursor', () => String, { nullable: true }) cursor: string | null
   ): Promise<PaginatedPosts> {
     const realLimit = Math.min(50, limit) + 1;
     const realLimitPlusOne = realLimit + 1;
