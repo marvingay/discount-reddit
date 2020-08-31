@@ -1,13 +1,23 @@
-import { Resolver, Mutation, Field, Arg, Ctx, ObjectType, Query, FieldResolver, Root } from "type-graphql";
-import { MyContext } from "src/types";
-import { User } from "../entities/User";
-import argon2 from "argon2";
-import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from "../constants";
-import { UsernamePasswordInput } from "./UsernamePasswordInput";
-import { validateRegister } from "../utils/validateRegister";
-import { sendEmail } from "../utils/sendEmail";
+import {
+  Resolver,
+  Mutation,
+  Field,
+  Arg,
+  Ctx,
+  ObjectType,
+  Query,
+  FieldResolver,
+  Root,
+} from 'type-graphql';
+import { MyContext } from 'src/types';
+import { User } from '../entities/User';
+import argon2 from 'argon2';
+import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from '../constants';
+import { UsernamePasswordInput } from './UsernamePasswordInput';
+import { validateRegister } from '../utils/validateRegister';
+import { sendEmail } from '../utils/sendEmail';
 import { v4 } from 'uuid';
-import { getConnection } from "typeorm";
+import { getConnection } from 'typeorm';
 
 @ObjectType()
 class FieldError {
@@ -21,11 +31,10 @@ class FieldError {
 @ObjectType()
 class UserResponse {
   @Field(() => [FieldError], { nullable: true })
-  errors?: FieldError[]
+  errors?: FieldError[];
 
   @Field(() => User, { nullable: true })
-  user?: User
-
+  user?: User;
 }
 
 @Resolver(User)
@@ -34,11 +43,10 @@ export class UserResolver {
   email(@Root() user: User, @Ctx() { req }: MyContext) {
     // current user, show own email
     if (req.session.userId === user.id) {
-
-      return user.email
+      return user.email;
     }
     // current user, wants other emails?
-    return "";
+    return '';
   }
 
   @Mutation(() => UserResponse)
@@ -52,26 +60,24 @@ export class UserResolver {
         errors: [
           {
             field: 'newPassword',
-            message: 'length must be greater than 2'
-          }
-        ]
+            message: 'length must be greater than 2',
+          },
+        ],
       };
-
     }
 
-    const key = FORGET_PASSWORD_PREFIX + token
-    const userId = await redis.get(key)
+    const key = FORGET_PASSWORD_PREFIX + token;
+    const userId = await redis.get(key);
 
     if (!userId) {
       return {
         errors: [
           {
             field: 'token',
-            message: 'token expired'
-          }
-        ]
+            message: 'token expired',
+          },
+        ],
       };
-
     }
 
     const userIdNum = parseInt(userId);
@@ -82,18 +88,18 @@ export class UserResolver {
         errors: [
           {
             field: 'token',
-            message: 'user no longer exists'
-          }
-        ]
+            message: 'user no longer exists',
+          },
+        ],
+      };
+    }
 
-      }
-    };
-
-    User.update({ id: userIdNum },
+    User.update(
+      { id: userIdNum },
       {
         password: await argon2.hash(newPassword),
       }
-    )
+    );
     // Delete forgotPassword token when done
     redis.del(key);
 
@@ -101,10 +107,10 @@ export class UserResolver {
     req.session.userId = user.id;
 
     return { user };
-
   }
 
   @Mutation(() => Boolean)
+  // TODO: Setup email provider
   async forgotPassword(
     @Arg('email') email: string,
     @Ctx() { redis }: MyContext
@@ -117,20 +123,23 @@ export class UserResolver {
 
     const token = v4();
 
-    await redis.set(FORGET_PASSWORD_PREFIX + token, user.id, 'ex', 1000 * 60 * 60 * 24 * 3); // 3 days
+    await redis.set(
+      FORGET_PASSWORD_PREFIX + token,
+      user.id,
+      'ex',
+      1000 * 60 * 60 * 24 * 3
+    ); // 3 days
 
     await sendEmail(
       email,
       `<a href="http://localhost:3000/change-password/${token}">Reset Password</a>`
-    )
+    );
 
     return true;
   }
 
   @Query(() => User, { nullable: true })
-  me(
-    @Ctx() { req }: MyContext
-  ) {
+  me(@Ctx() { req }: MyContext) {
     // You are not logged in!
     if (!req.session.userId) {
       return null;
@@ -139,19 +148,17 @@ export class UserResolver {
     return User.findOne(req.session.userId);
   }
 
-
   @Mutation(() => UserResponse)
   async register(
     @Arg('options') options: UsernamePasswordInput,
     @Ctx() { req }: MyContext
   ): Promise<UserResponse> {
-
     const errors = validateRegister(options);
     if (errors) {
       return { errors };
     }
 
-    const hashedPassword = await argon2.hash(options.password)
+    const hashedPassword = await argon2.hash(options.password);
     let user;
 
     try {
@@ -169,21 +176,19 @@ export class UserResolver {
         .execute();
 
       user = result.raw[0];
-    }
-    catch (error) {
-      console.log("message:", error.message)
+    } catch (error) {
+      console.log('message:', error.message);
       if (error.code === '23505' || error.detail.includes('already exists')) {
         // Duplicate Username Error
 
         return {
           errors: [
             {
-              field: "username",
-              message: "username already taken"
-            }
-          ]
-        }
-
+              field: 'username',
+              message: 'username already taken',
+            },
+          ],
+        };
       }
     }
 
@@ -207,12 +212,13 @@ export class UserResolver {
     );
     if (!user) {
       return {
-        errors: [{
-          field: 'usernameOrEmail',
-          message: 'that username doesn\'t exist',
-        },
-        ]
-      }
+        errors: [
+          {
+            field: 'usernameOrEmail',
+            message: "that username doesn't exist",
+          },
+        ],
+      };
     }
     const valid = await argon2.verify(user.password, password);
     if (!valid) {
@@ -222,30 +228,30 @@ export class UserResolver {
             field: 'password',
             message: 'incorrect password',
           },
-        ]
-      }
+        ],
+      };
     }
 
     req.session.userId = user.id;
 
     return {
-      user
+      user,
     };
   }
 
   @Mutation(() => Boolean)
-  logout(
-    @Ctx() { req, res }: MyContext
-  ) {
-    return new Promise((resolve) => req.session.destroy(err => {
-      res.clearCookie(COOKIE_NAME);
-      if (err) {
-        console.log(err);
-        resolve(false)
-        return
-      }
+  logout(@Ctx() { req, res }: MyContext) {
+    return new Promise((resolve) =>
+      req.session.destroy((err) => {
+        res.clearCookie(COOKIE_NAME);
+        if (err) {
+          console.log(err);
+          resolve(false);
+          return;
+        }
 
-      resolve(true)
-    }))
+        resolve(true);
+      })
+    );
   }
 }
